@@ -76,21 +76,32 @@ winget install --id=Python.Python.3 -e --source winget
 winget install --id=Git.Git -e --source winget
 
 cd $env:USERPROFILE
-mkdir projects
+# Create projects folder if it doesn't exist
+if (-not (Test-Path -Path .\projects)) { mkdir projects }
 cd projects
-git clone https://github.com/techrumel/HTP.git
+
+# Clone HTP repo (skip if already exists)
+if (-not (Test-Path -Path .\HTP)) {
+    git clone https://github.com/techrumel/HTP.git
+}
 cd HTP
 
 # Create Python virtual environment
 python -m venv .venv
 
-# Activate venv (if blocked, bypass policy)
+# Activate venv (bypass execution policy if blocked)
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 .\.venv\Scripts\Activate.ps1
 
 # Upgrade pip & install required Python packages
 pip install --upgrade pip setuptools wheel
 pip install flask requests "qrcode[pil]" pillow
+
+# Optional: download cloudflared if not present
+if (-not (Test-Path -Path .\bin\cloudflared.exe)) {
+    mkdir .\bin -Force
+    Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile ".\bin\cloudflared.exe" -UseBasicParsing
+}
 </code></pre>
 
 <hr>
@@ -98,11 +109,11 @@ pip install flask requests "qrcode[pil]" pillow
 <pre><code># (PowerShell)
 cd $env:USERPROFILE\projects\HTP
 
-# Activate venv
+# Activate venv (bypass execution policy if blocked)
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 .\.venv\Scripts\Activate.ps1
 
-# Run in foreground
+# Run in foreground (interactive)
 python HTP.py
 
 # OR run in background with logs
@@ -112,9 +123,10 @@ $p = Start-Process -FilePath python -ArgumentList "HTP.py" -RedirectStandardOutp
 # Monitor logs live
 Get-Content .\logs\out.log -Wait -Tail 50
 
-# Stop HTP safely
-Stop-Process -Id $p.Id
+# Optional: Start Cloudflared manually if public URL needed
+.\bin\cloudflared.exe tunnel --url http://
 </code></pre>
+
 
 
 <hr>
