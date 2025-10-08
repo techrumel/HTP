@@ -1,28 +1,4 @@
 
----
-
-## 2) HTML version (complete) — copy this whole block into a `.html` file
-
-```html
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>HTP by MrXeno — README</title>
-<style>
-  body{font-family:Inter,Arial,sans-serif;background:#f9fafb;color:#111;padding:28px;max-width:980px;margin:0 auto}
-  h1{font-size:28px}
-  pre{background:#111827;color:#f8fafc;padding:12px;border-radius:6px;overflow:auto}
-  code{background:#eef2ff;padding:2px 6px;border-radius:4px}
-  .badge{display:inline-block;padding:4px 8px;border-radius:6px;color:#fff;margin-right:6px}
-  .b-blue{background:#3572A5}.b-green{background:#16a34a}.b-orange{background:#f97316}
-  hr{border:none;height:1px;background:#e6e6e6;margin:18px 0}
-  h2{margin-top:18px}
-  ul{margin-left:18px}
-  .note{color:#6b7280;font-style:italic}
-</style>
-</head>
 <body>
 <h1>HTP by MrXeno 🔍📱</h1>
 <div>
