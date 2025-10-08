@@ -71,7 +71,7 @@ tail -f logs/out.log
 <hr>
 <h2>3) WINDOWS (PowerShell) — Install</h2>
 <pre><code># (PowerShell)
-# install Python & Git using winget (optional)
+# Install Python & Git using winget (optional)
 winget install --id=Python.Python.3 -e --source winget
 winget install --id=Git.Git -e --source winget
 
@@ -80,8 +80,15 @@ mkdir projects
 cd projects
 git clone https://github.com/techrumel/HTP.git
 cd HTP
+
+# Create Python virtual environment
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1    # if blocked, run: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+# Activate venv (if blocked, bypass policy)
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+.\.venv\Scripts\Activate.ps1
+
+# Upgrade pip & install required Python packages
 pip install --upgrade pip setuptools wheel
 pip install flask requests "qrcode[pil]" pillow
 </code></pre>
@@ -90,14 +97,25 @@ pip install flask requests "qrcode[pil]" pillow
 <h2>3a) WINDOWS — Re-open / Start</h2>
 <pre><code># (PowerShell)
 cd $env:USERPROFILE\projects\HTP
+
+# Activate venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 .\.venv\Scripts\Activate.ps1
-# run foreground
+
+# Run in foreground
 python HTP.py
-# or background with logs
+
+# OR run in background with logs
 New-Item -ItemType Directory -Path .\logs -Force | Out-Null
 $p = Start-Process -FilePath python -ArgumentList "HTP.py" -RedirectStandardOutput ".\logs\out.log" -RedirectStandardError ".\logs\err.log" -PassThru
-Get-Content .\logs\out.log -Wait -Tail 20
+
+# Monitor logs live
+Get-Content .\logs\out.log -Wait -Tail 50
+
+# Stop HTP safely
+Stop-Process -Id $p.Id
 </code></pre>
+
 
 <hr>
 <h2>Common commands</h2>
