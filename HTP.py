@@ -64,8 +64,8 @@ def tool_lock():
     safe_clear()
     print(f"{RED}╔{'═'*60}╗{RESET}")
     print(f"{RED}║{'🔒 TOOL LOCKED 🔒'.center(60)}║{RESET}")
-    print(f"{RED}║{'HTO BY MrXeno'.center(60)}║{RESET}")
-    print(f"{RED}║{'Subscribe @mrrajrumel 🔔'.center(60)}║{RESET}")
+    print(f"{RED}║{'HTP BY MrXeno'.center(60)}║{RESET}")
+    print(f"{RED}║{'Follow @mrrajrumel 🔔'.center(60)}║{RESET}")
     print(f"{RED}╚{'═'*60}╝{RESET}\n")
     print(f"{YELLOW}This script is for testing on devices you own or where you have explicit permission.{RESET}\n")
     for i in range(9, 0, -1):
