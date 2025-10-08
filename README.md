@@ -1,28 +1,69 @@
-
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>HTP — Install & Re-open Guide</title>
+</head>
 <body>
-<h1>HTP by MrXeno 🔍📱</h1>
-<div>
-  <span class="badge b-blue">Python 3.x</span>
-  <span class="badge b-green">MIT License</span>
-  <span class="badge b-orange">Termux | Windows | Linux</span>
-</div>
-<p>A Termux-friendly <strong>phone tracking & testing tool</strong> with <strong>full auto install</strong> and Cloudflare tunnel support.</p>
-<blockquote><strong>IMPORTANT:</strong> Use this tool only on devices you own or have <strong>explicit permission</strong> to test. Misuse is illegal and unethical.</blockquote>
-<hr>
+  <h1>HTP by MrXeno 🔍📱</h1>
 
-<h2>Quick overview</h2>
-<p class="note">This README contains: Termux, Ubuntu/WSL, Windows installation and re-open/start instructions.</p>
+  <p><strong>IMPORTANT:</strong> Use this tool only on devices you own or have explicit permission to test. Misuse is illegal and unethical.</p>
 
-<hr>
-<h2>1) TERMUX — Install (first time)</h2>
-<pre><code>pkg update -y && pkg upgrade -y
-pkg install git python curl wget proot-distro -y
+  <hr>
+
+  <h2>Table of contents</h2>
+  <ol>
+    <li>Termux — Install & Re-open</li>
+    <li>Termux (Ubuntu proot) — Install & Re-open</li>
+    <li>Ubuntu / WSL — Install & Re-open</li>
+    <li>Windows (PowerShell) — Install & Re-open (auto cloudflared)</li>
+    <li>Common commands: run, logs, stop</li>
+  </ol>
+
+  <hr>
+
+  <h2>1) TERMUX (native) — Install</h2>
+  <p>If you want to run native Termux (we recommend Ubuntu proot for better compatibility):</p>
+  <pre><code>pkg update -y && pkg upgrade -y
+pkg install git python curl wget -y
+
+# Clone repo
+mkdir -p ~/projects
+cd ~/projects
+git clone https://github.com/techrumel/HTP.git
+cd HTP
+chmod +x HTP.py
+
+# Create venv and install
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+pip install flask requests "qrcode[pil]" pillow</code></pre>
+
+  <h3>Termux — Re-open / Start</h3>
+  <pre><code>cd ~/projects/HTP
+source .venv/bin/activate
+# foreground (debug)
+python3 HTP.py
+# or background with logs
+mkdir -p logs
+nohup python3 HTP.py > logs/out.log 2>&1 &
+tail -f logs/out.log</code></pre>
+
+  <hr>
+
+  <h2>2) TERMUX (Ubuntu proot) — Install</h2>
+  <p>Using Ubuntu proot gives better binary compatibility — recommended:</p>
+  <pre><code>pkg update -y && pkg upgrade -y
+pkg install proot-distro git -y
 proot-distro install ubuntu
 proot-distro login ubuntu
-</code></pre>
-<p><strong>Inside Ubuntu proot:</strong></p>
-<pre><code>apt update && apt upgrade -y
-apt install -y python3 python3-venv python3-pip build-essential pkg-config libjpeg-turbo8-dev libpng-dev zlib1g-dev libfreetype6-dev git wget
+
+# Now inside Ubuntu shell:
+apt update && apt upgrade -y
+apt install -y python3 python3-venv python3-pip build-essential pkg-config libjpeg-dev libpng-dev zlib1g-dev libfreetype6-dev git wget curl
+
+# Clone & setup
 mkdir -p ~/projects
 cd ~/projects
 git clone https://github.com/techrumel/HTP.git
@@ -30,24 +71,23 @@ cd HTP
 chmod +x HTP.py
 python3 -m venv .venv
 source .venv/bin/activate
-pip install --upgrade pip setuptools wheel
-pip install flask requests "qrcode[pil]" pillow
-</code></pre>
+python -m pip install --upgrade pip setuptools wheel
+pip install flask requests "qrcode[pil]" pillow</code></pre>
 
-<hr>
-<h2>1a) TERMUX — Re-open / Start</h2>
-<pre><code>proot-distro login ubuntu
+  <h3>Termux (Proot) — Re-open / Start</h3>
+  <pre><code>proot-distro login ubuntu
 cd ~/projects/HTP
 source .venv/bin/activate
 mkdir -p logs
-nohup python3 HTP.py &gt; logs/out.log 2&gt;&amp;1 &amp;
-tail -f logs/out.log
-</code></pre>
+nohup python3 HTP.py > logs/out.log 2>&1 &
+tail -f logs/out.log</code></pre>
 
-<hr>
-<h2>2) UBUNTU / WSL — Install</h2>
-<pre><code>sudo apt update && sudo apt upgrade -y
-sudo apt install -y python3 python3-venv python3-pip git curl wget build-essential pkg-config libjpeg-turbo8-dev libpng-dev zlib1g-dev libfreetype6-dev
+  <hr>
+
+  <h2>3) UBUNTU / WSL (Desktop) — Install</h2>
+  <pre><code>sudo apt update && sudo apt upgrade -y
+sudo apt install -y python3 python3-venv python3-pip git wget curl build-essential pkg-config libjpeg-dev libpng-dev zlib1g-dev libfreetype6-dev
+
 mkdir -p ~/projects
 cd ~/projects
 git clone https://github.com/techrumel/HTP.git
@@ -55,97 +95,134 @@ cd HTP
 chmod +x HTP.py
 python3 -m venv .venv
 source .venv/bin/activate
-pip install --upgrade pip setuptools wheel
-pip install flask requests "qrcode[pil]" pillow
-</code></pre>
+python -m pip install --upgrade pip setuptools wheel
+pip install flask requests "qrcode[pil]" pillow</code></pre>
 
-<hr>
-<h2>2a) UBUNTU / WSL — Re-open / Start</h2>
-<pre><code>cd ~/projects/HTP
+  <h3>Ubuntu / WSL — Re-open / Start</h3>
+  <pre><code>cd ~/projects/HTP
 source .venv/bin/activate
 mkdir -p logs
-nohup python3 HTP.py &gt; logs/out.log 2&gt;&amp;1 &amp;
-tail -f logs/out.log
-</code></pre>
+nohup python3 HTP.py > logs/out.log 2>&1 &
+tail -f logs/out.log</code></pre>
 
-<hr>
-<h2>3) WINDOWS (PowerShell) — Install</h2>
-<pre><code># (PowerShell)
-# Install Python & Git using winget (optional)
+  <hr>
+
+  <h2>4) WINDOWS (PowerShell) — Install (auto cloudflared)</h2>
+  <p>Copy and paste the commands below into PowerShell. They will:</p>
+  <ul>
+    <li>Create and activate a virtual environment (temporary execution policy bypass if needed)</li>
+    <li>Install Python packages</li>
+    <li>Detect Windows architecture and download the correct Cloudflare Tunnel binary into <code>.\bin\cloudflared.exe</code></li>
+  </ul>
+
+  <pre><code># (PowerShell)
+# Optional: install Python & Git via winget if needed
 winget install --id=Python.Python.3 -e --source winget
 winget install --id=Git.Git -e --source winget
 
 cd $env:USERPROFILE
-# Create projects folder if it doesn't exist
-if (-not (Test-Path -Path .\projects)) { mkdir projects }
-cd projects
+if (-not (Test-Path -Path ".\projects")) { New-Item -ItemType Directory -Path ".\projects" | Out-Null }
+cd .\projects
 
-# Clone HTP repo (skip if already exists)
-if (-not (Test-Path -Path .\HTP)) {
-    git clone https://github.com/techrumel/HTP.git
+# Clone repo if not present
+if (-not (Test-Path -Path ".\HTP")) {
+  git clone https://github.com/techrumel/HTP.git
 }
 cd HTP
 
-# Create Python virtual environment
+# Create venv and activate (bypass execution policy for this session)
 python -m venv .venv
-
-# Activate venv (bypass execution policy if blocked)
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 .\.venv\Scripts\Activate.ps1
 
-# Upgrade pip & install required Python packages
-pip install --upgrade pip setuptools wheel
+# Upgrade pip & install Python packages
+python -m pip install --upgrade pip setuptools wheel
 pip install flask requests "qrcode[pil]" pillow
 
-# Optional: download cloudflared if not present
-if (-not (Test-Path -Path .\bin\cloudflared.exe)) {
-    mkdir .\bin -Force
-    Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile ".\bin\cloudflared.exe" -UseBasicParsing
-}
-</code></pre>
+# Auto-detect Windows architecture and download correct cloudflared
+$binDir = Join-Path $PWD "bin"
+New-Item -ItemType Directory -Path $binDir -Force | Out-Null
+$arch = (Get-CimInstance Win32_OperatingSystem).OSArchitecture
+Write-Output "Detected OS Architecture: $arch"
 
-<hr>
-<h2>3a) WINDOWS — Re-open / Start</h2>
-<pre><code># (PowerShell)
+if ($arch -match "64") {
+  $cloudUrl = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
+} elseif ($arch -match "32") {
+  $cloudUrl = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-386.exe"
+} else {
+  $cloudUrl = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
+}
+
+$cloudPath = Join-Path $binDir "cloudflared.exe"
+Write-Output "Downloading cloudflared from: $cloudUrl"
+Invoke-WebRequest -Uri $cloudUrl -OutFile $cloudPath -UseBasicParsing
+Write-Output "Saved cloudflared to: $cloudPath"</code></pre>
+
+  <h3>Windows — Re-open / Start</h3>
+  <pre><code># (PowerShell)
 cd $env:USERPROFILE\projects\HTP
 
 # Activate venv (bypass execution policy if blocked)
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 .\.venv\Scripts\Activate.ps1
 
-# Run in foreground (interactive)
+# Run HTP in foreground
 python HTP.py
 
-# OR run in background with logs
+# Or run in background with logs
 New-Item -ItemType Directory -Path .\logs -Force | Out-Null
-$p = Start-Process -FilePath python -ArgumentList "HTP.py" -RedirectStandardOutput ".\logs\out.log" -RedirectStandardError ".\logs\err.log" -PassThru
+$p = Start-Process -FilePath ".\.venv\Scripts\python.exe" -ArgumentList "HTP.py" -RedirectStandardOutput ".\logs\out.log" -RedirectStandardError ".\logs\err.log" -PassThru
 
-# Monitor logs live
+# Tail logs
 Get-Content .\logs\out.log -Wait -Tail 50
 
-# Optional: Start Cloudflared manually if public URL needed
-.\bin\cloudflared.exe tunnel --url http://
-</code></pre>
+# If cloudflared did not auto-start or no public URL shown, run manually:
+cd $env:USERPROFILE\projects\HTP\bin
+.\cloudflared.exe tunnel --url http://127.0.0.1:8080</code></pre>
 
+  <hr>
 
+  <h2>5) Common commands (same everywhere)</h2>
 
-<hr>
-<h2>Common commands</h2>
-<pre><code>mkdir -p logs
-nohup python3 HTP.py &gt; logs/out.log 2&gt;&amp;1 &amp;
+  <h3>Start (foreground)</h3>
+  <pre><code>python HTP.py</code></pre>
+
+  <h3>Start (background) — Linux / Termux</h3>
+  <pre><code>mkdir -p logs
+nohup python3 HTP.py > logs/out.log 2>&1 &</code></pre>
+
+  <h3>Start (background) — Windows PowerShell</h3>
+  <pre><code>New-Item -ItemType Directory -Path .\logs -Force | Out-Null
+Start-Process -FilePath ".\.venv\Scripts\python.exe" -ArgumentList "HTP.py" -RedirectStandardOutput ".\logs\out.log" -RedirectStandardError ".\logs\err.log" -PassThru</code></pre>
+
+  <h3>View logs</h3>
+  <pre><code># Linux / Termux
 tail -f logs/out.log
+
+# Windows PowerShell
+Get-Content .\logs\out.log -Wait -Tail 50</code></pre>
+
+  <h3>Stop HTP</h3>
+  <pre><code># Linux / Termux
 pkill -f HTP.py
-~/bin/cloudflared tunnel --url http://127.0.0.1:8080</code></pre>
 
-<hr>
-<h2>Troubleshooting & notes</h2>
-<ul>
-<li>If `pillow` fails, install system packages and retry <code>pip install --no-cache-dir pillow</code>.</li>
-<li>If cloudflared shows illegal instruction, download binary for your architecture.</li>
-<li>Use Ubuntu proot on Termux for best compatibility.</li>
-</ul>
+# Windows (PowerShell)
+Get-Process python | Where-Object { $_.Path -like "*HTP*" } | Stop-Process -Force</code></pre>
 
-<hr>
-<p><strong>With great power comes great responsibility. Use knowledge ethically.</strong></p>
+  <hr>
+
+  <h2>Troubleshooting — common issues</h2>
+  <ul>
+    <li><strong>cloudflared architecture / WinError 193:</strong> you have the wrong binary. Use the Windows auto-detect step above or replace <code>.\bin\cloudflared.exe</code> with the matching file for your OS (amd64 / 386 / arm).</li>
+    <li><strong>ModuleNotFoundError:</strong> activate <code>.venv</code> then run <code>pip install &lt;module&gt;</code>.</li>
+    <li><strong>Pillow build errors:</strong> install system dev packages (libjpeg, zlib, libpng, freetype) before installing pillow.</li>
+    <li><strong>Cloudflare tunnel not shown:</strong> run cloudflared manually from <code>.\bin\cloudflared.exe tunnel --url http://127.0.0.1:8080</code> and check its output for the <code>trycloudflare</code> URL.</li>
+  </ul>
+
+  <hr>
+
+  <h2>Legal & Ethical</h2>
+  <p>Always get explicit permission before tracking devices. This tool is for education/testing. Misuse is your responsibility.</p>
+
 </body>
 </html>
