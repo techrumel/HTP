@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# HTO by MrXeno - FULL AUTO INSTALL + CLOUDFLARE
+# HTP by MrXeno - FULL AUTO INSTALL + CLOUDFLARE
 # IMPORTANT: Use this only on devices YOU OWN or with EXPLICIT CONSENT.
 
 import os
@@ -36,8 +36,8 @@ def tool_lock():
     os.system("clear")
     print(f"{RED}╔{'═'*60}╗{RESET}")
     print(f"{RED}║{'🔒 TOOL LOCKED 🔒'.center(60)}║{RESET}")
-    print(f"{RED}║{'HTO BY MrXeno'.center(60)}║{RESET}")
-    print(f"{RED}║{'Subscribe @hackers_colony_tech 🔔'.center(60)}║{RESET}")
+    print(f"{RED}║{'HTP BY MrXeno'.center(60)}║{RESET}")
+    print(f"{RED}║{'Follow @mrrajrumel 🔔'.center(60)}║{RESET}")
     print(f"{RED}╚{'═'*60}╝{RESET}\n")
     print(f"{YELLOW}This script is for testing on devices you own or where you have explicit permission.{RESET}\n")
     
@@ -164,7 +164,7 @@ def index():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTO</title>
+    <title>HTP</title>
     <style>
         body {
             background: #000;
@@ -327,7 +327,7 @@ def main():
     tool_lock()
     install_requirements()
     os.system("clear")
-    print(f"{GREEN}🚀 Starting HTO...{RESET}")
+    print(f"{GREEN}🚀 Starting HTP...{RESET}")
 
     port = 8080
     public_url = create_public_url(port=port)
@@ -335,7 +335,7 @@ def main():
     make_qr(public_url)
     
     print(f"\n{GREEN}{'='*60}{RESET}")
-    print(f"{GREEN}{'HTO BY MrXeno'.center(60)}{RESET}")
+    print(f"{GREEN}{'HTP BY MrXeno'.center(60)}{RESET}")
     print(f"{GREEN}{'='*60}{RESET}")
     print(f"{YELLOW}Public URL: {RESET}{public_url}\n")
     print(f"{YELLOW}Share the link or QR with the user (test on devices you own).{RESET}")
